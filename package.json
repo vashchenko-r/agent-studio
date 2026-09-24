@@ -3,7 +3,7 @@
   "displayName": "Agent Studio",
   "description": "Build, inspect, and orchestrate Cursor subagents visually.",
   "version": "0.1.7",
-  "publisher": "local",
+  "publisher": "vashchenko-r",
   "license": "MIT",
   "repository": {
     "type": "git",
