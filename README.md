@@ -1,65 +1,67 @@
 # Agent Studio
 
-Build, inspect, and orchestrate Cursor subagents without hand-writing frontmatter.
+Create focused Cursor agents without writing Markdown frontmatter by hand.
 
-Agent Studio adds a visual workspace to Cursor for creating focused agents, attaching repository context, previewing the exact generated Markdown, and composing multi-agent workflows. The result stays portable: every saved agent is a normal Cursor subagent file that can be reviewed and committed with the rest of your project.
+Choose a specialist, review its instructions, and save it as a normal Cursor subagent. Agent Studio keeps the result in your project, so it stays readable, portable, and ready to commit.
 
-## What you can do
+## Start in under a minute
 
-- Create workspace or global subagents from guided forms.
-- Start with detailed templates for review, debugging, testing, frontend, backend, API, database, research, planning, accessibility, performance, security, documentation, and verification.
-- Attach files, folders, selections, project rules, and configuration as starting context.
-- Configure native Cursor fields including `model`, `readonly`, and `is_background`.
-- Reopen existing agents from `.cursor/agents`, duplicate them, and inspect the exact compiled prompt.
-- Build ordered orchestras that delegate phases to specialist subagents and carry verified handoffs forward.
-- Copy an orchestra runbook and open a new Cursor Agent chat.
+1. Open **Agent Studio** in the Activity Bar.
+2. Choose a template or describe the agent you need.
+3. Review its role, rules, and context.
+4. Click **Save**. Cursor picks up the generated agent automatically.
 
-## Quick start
+To use it in chat, call it with `/agent-name`.
 
-1. Open **Agent Studio** from the Activity Bar.
-2. Select **New** and describe the specialty, or choose a built-in template.
-3. Review the role, instructions, responsibilities, constraints, context, and output contract.
-4. Select **Save**. Cursor discovers the generated Markdown automatically.
+## What it helps with
 
-For a reusable workflow, create an **Orchestra**, add agents in execution order, and give each phase a concrete task. The generated coordinator requires every phase to return evidence and verification before handing work to the next phase.
+- **Specialists:** start from ready-made agents for code review, debugging, testing, frontend, backend, APIs, databases, research, planning, accessibility, performance, security, documentation, and verification.
+- **Project context:** attach files, folders, selections, rules, and configuration.
+- **Transparency:** inspect the exact Markdown before saving it.
+- **Team workflows:** combine specialists into an ordered orchestra with clear handoffs.
+- **Portability:** agents remain ordinary `.cursor/agents` files.
 
-## Files Agent Studio creates
+## Where everything lives
 
-Workspace agents are written to `.cursor/agents/<slug>.md`. Their editable Studio metadata lives at `.cursor/agent-studio/<slug>.json`.
+| Scope | Agent Cursor runs | Editor state |
+| --- | --- | --- |
+| This project | `.cursor/agents/<name>.md` | `.cursor/agent-studio/<name>.json` |
+| All projects | `~/.cursor/agents/<name>.md` | `~/.cursor/agent-studio/<name>.json` |
 
-Global agents are written to `~/.cursor/agents/<slug>.md`. Their metadata lives at `~/.cursor/agent-studio/<slug>.json`.
+The Markdown file is the agent. The JSON file only remembers the form so you can edit it visually later.
 
-The Markdown file is the source Cursor executes. The JSON sidecar only preserves the structured editor state. Existing Markdown agents appear in Agent Studio even when no sidecar exists; saving an imported file rewrites its prompt into Agent Studio's sectioned format.
+## Built-in specialists
 
-## How generation works
+Agent Studio includes practical starting points for:
 
-Agent Studio is intentionally local and transparent:
+- implementation planning and technical research;
+- React, frontend, backend, API, and database work;
+- debugging, testing, and change verification;
+- code, accessibility, performance, and security reviews;
+- documentation.
 
-- **Generate** uses local keyword matching to select a built-in template. It does not send the prompt to a model.
-- Profiles, responsibilities, constraints, context, project rules, behavior, output format, and skills are compiled into the prompt body.
-- Native Cursor frontmatter contains `name`, `description`, `model`, `readonly`, and `is_background`.
-- **Inspector** shows the exact file before you save it.
+Each template includes a role, working process, responsibilities, boundaries, and an expected output format. You can adapt it before saving.
 
-## Cursor API limitations
+## Orchestras
 
-Cursor currently exposes no extension API that submits a subagent run. Saved agents are invoked through Cursor itself with `/agent-name`. For orchestras, Agent Studio can copy the complete runbook and open a new Agent chat when `composer.newAgentChat` is available; you review, paste, and send it yourself.
+An orchestra is a reusable sequence of specialists. Add the agents in the order they should work and describe what each phase must return.
 
-Subagents inherit the parent agent's tools. Per-agent tool allowlists, MCP servers, hooks, custom environments, and permissions beyond `readonly` are not public subagent fields; the advanced editor labels those limitations instead of pretending to configure them.
+Agent Studio creates a coordinator that asks Cursor to delegate each phase, wait for its evidence, and carry the result into the next phase.
 
-The optional `agentStudio.mirrorAgentsToPlugin` setting mirrors saved agents into an extension-managed Cursor plugin directory. It is disabled by default because Cursor already reads workspace and global agent directories, and mirroring may display duplicates.
+## Good to know
 
-## Privacy
+- **Generate** selects a template on your machine. It does not send your description to a model.
+- Agent Studio does not collect telemetry or make network requests.
+- Cursor does not yet provide an API for an extension to submit a subagent run, so agents are launched through Cursor's native `/agent-name` flow.
+- The first folder is used in a multi-root workspace. Virtual workspaces are not supported, and an untrusted workspace must be trusted before agents can be written.
 
-Agent Studio has no telemetry and makes no network requests. Agent definitions, profiles, templates, and context presets remain on your machine. Selected code is embedded in the generated agent prompt only when you explicitly attach it.
+## Feedback and support
 
-## Requirements
+- Browse the source: [vashchenko-r/agent-studio](https://github.com/vashchenko-r/agent-studio)
+- Report a bug or request a feature: [GitHub Issues](https://github.com/vashchenko-r/agent-studio/issues)
+- Ask a question: [GitHub Discussions](https://github.com/vashchenko-r/agent-studio/discussions)
 
-- Cursor with VS Code extension compatibility
-- VS Code engine `1.85.0` or newer
-
-This extension targets Cursor-specific subagents. It can load in compatible VS Code builds, but agent discovery and Cursor chat commands require Cursor.
-
-Agent Studio currently targets the first folder in a multi-root workspace. Virtual workspaces are unsupported, and untrusted workspaces must be trusted before the extension can write agent definitions.
+Please avoid including secrets, private code, or access tokens in public reports.
 
 ## Development
 
@@ -71,8 +73,4 @@ npm run compile
 npm run package:vsix
 ```
 
-Launch **Run Agent Studio** from Run and Debug for an Extension Development Host.
-
-## Support
-
-See `SUPPORT.md` for troubleshooting and issue-reporting details. Changes are documented in `CHANGELOG.md`.
+Use **Run Agent Studio** from Run and Debug to open an Extension Development Host.

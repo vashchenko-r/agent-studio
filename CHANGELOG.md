@@ -2,6 +2,10 @@
 
 All notable changes to Agent Studio are documented here.
 
+## 0.1.8
+
+- Rewrote the Marketplace README into a shorter guide with direct links to the repository, issues, and discussions.
+
 ## 0.1.7
 
 - Removed misleading per-agent run controls; saved agents are invoked through Cursor's native `/agent-name` flow.

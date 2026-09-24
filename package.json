@@ -1,8 +1,8 @@
 {
   "name": "agent-studio",
   "displayName": "Agent Studio",
-  "description": "Build, inspect, and orchestrate Cursor subagents visually.",
-  "version": "0.1.7",
+  "description": "Create focused Cursor agents without writing Markdown frontmatter by hand.",
+  "version": "0.1.8",
   "publisher": "vashchenko-r",
   "license": "MIT",
   "repository": {
