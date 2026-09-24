@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6D5EF8"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <filter id="shadow" x="34" y="34" width="188" height="194" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="256" height="256" rx="52" fill="url(#bg)"/>
+  <path d="M45 80C72 45 112 29 158 39C188 45 211 61 225 83" stroke="white" stroke-opacity=".16" stroke-width="18" stroke-linecap="round"/>
+  <g filter="url(#shadow)" stroke="white" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="128" cy="52" r="12"/>
+    <path d="M128 64V82"/>
+    <rect x="57" y="82" width="142" height="104" rx="27" fill="white" fill-opacity=".14"/>
+    <path d="M92 186V216M164 186V216"/>
+    <path d="M72 216H108M148 216H184" stroke-width="13"/>
+  </g>
+  <circle cx="91" cy="128" r="13" fill="white"/>
+  <circle cx="165" cy="128" r="13" fill="white"/>
+  <path d="M101 157C116 169 140 169 155 157" stroke="white" stroke-width="10" stroke-linecap="round"/>
+</svg>

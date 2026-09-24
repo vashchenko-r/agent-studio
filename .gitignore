@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.vsix
+.cursor/agent-studio/
+.cursor/agents/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store

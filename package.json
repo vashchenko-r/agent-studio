@@ -1,0 +1,175 @@
+{
+  "name": "agent-studio",
+  "displayName": "Agent Studio",
+  "description": "Build, inspect, and orchestrate Cursor subagents visually.",
+  "version": "0.1.7",
+  "publisher": "local",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vashchenko-r/agent-studio.git"
+  },
+  "homepage": "https://github.com/vashchenko-r/agent-studio#readme",
+  "bugs": {
+    "url": "https://github.com/vashchenko-r/agent-studio/issues"
+  },
+  "icon": "media/icon.png",
+  "pricing": "Free",
+  "galleryBanner": {
+    "color": "#4338CA",
+    "theme": "dark"
+  },
+  "keywords": [
+    "cursor",
+    "agents",
+    "subagents",
+    "orchestration",
+    "ai"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:agentStudio.main",
+    "onCommand:agentStudio.open"
+  ],
+  "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Agent Studio writes executable Cursor agent definitions and is disabled until the workspace is trusted."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Agent Studio requires a local filesystem for .cursor/agents and sidecar metadata."
+    }
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "agentStudio",
+          "title": "Agent Studio",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "agentStudio": [
+        {
+          "type": "webview",
+          "id": "agentStudio.main",
+          "name": "Agent Studio",
+          "contextualTitle": "Agent Studio"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "agentStudio.open",
+        "title": "Agent Studio: Open",
+        "category": "Agent Studio"
+      },
+      {
+        "command": "agentStudio.newAgent",
+        "title": "Agent Studio: New Agent",
+        "category": "Agent Studio",
+        "icon": "$(add)"
+      },
+      {
+        "command": "agentStudio.searchAgents",
+        "title": "Agent Studio: Search Agents",
+        "category": "Agent Studio"
+      },
+      {
+        "command": "agentStudio.duplicateAgent",
+        "title": "Agent Studio: Duplicate Agent",
+        "category": "Agent Studio"
+      },
+      {
+        "command": "agentStudio.editAgent",
+        "title": "Agent Studio: Edit Agent",
+        "category": "Agent Studio"
+      },
+      {
+        "command": "agentStudio.previewAgent",
+        "title": "Agent Studio: Preview Agent",
+        "category": "Agent Studio"
+      },
+      {
+        "command": "agentStudio.createFromSelection",
+        "title": "Agent Studio: Create Agent from Selection",
+        "category": "Agent Studio"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "agentStudio.open"
+        },
+        {
+          "command": "agentStudio.newAgent"
+        },
+        {
+          "command": "agentStudio.searchAgents"
+        },
+        {
+          "command": "agentStudio.duplicateAgent"
+        },
+        {
+          "command": "agentStudio.editAgent"
+        },
+        {
+          "command": "agentStudio.previewAgent"
+        },
+        {
+          "command": "agentStudio.createFromSelection"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "agentStudio.createFromSelection",
+          "when": "editorHasSelection",
+          "group": "navigation@50"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "agentStudio.newAgent",
+          "when": "view == agentStudio.main",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Agent Studio",
+      "properties": {
+        "agentStudio.mirrorAgentsToPlugin": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also copy saved agents into an extension-managed Cursor plugin directory registered with vscode.cursor.plugins.registerPath. Off by default because Cursor already loads .cursor/agents and ~/.cursor/agents, and mirroring can show the same agent twice."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run check && npm run compile",
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test src/**/*.test.ts",
+    "package:vsix": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.0"
+  }
+}
