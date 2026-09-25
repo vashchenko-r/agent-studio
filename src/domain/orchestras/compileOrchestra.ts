@@ -18,7 +18,7 @@ export function validateOrchestra(draft: OrchestraDraft, agents: AgentRecord[]):
       errors.push(`Agent slug ${step.slug} exists in both workspace and global scope and is ambiguous to Cursor.`);
     }
     if (exact.isBackground) {
-      errors.push(`Background agent ${step.slug} cannot be used in a strictly sequential orchestra.`);
+      errors.push(`Background agent ${step.slug} runs in the background and cannot hand a result to the next phase. Open the agent and turn off Background.`);
     }
   }
   return [...new Set(errors)];

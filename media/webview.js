@@ -40,6 +40,14 @@ function lines(value) {
     .filter(Boolean);
 }
 
+function ambiguousSlugs(agents) {
+  const counts = new Map();
+  for (const agent of agents) {
+    counts.set(agent.slug, (counts.get(agent.slug) || 0) + 1);
+  }
+  return new Set([...counts].filter(([, count]) => count > 1).map(([slug]) => slug));
+}
+
 function field(label, html, badge) {
   return `<label class="field"><span>${escapeHtml(label)}${badge ? `<i class="badge">${escapeHtml(badge)}</i>` : ""}</span>${html}</label>`;
 }
@@ -51,6 +59,7 @@ function renderList() {
     const haystack = `${agent.displayName} ${agent.description} ${agent.role}`.toLowerCase();
     return !query || haystack.includes(query);
   });
+  const colliding = ambiguousSlugs(snapshot?.agents || []);
   const groups = [
     ["workspace", "Project agents"],
     ["global", "Global agents"],
@@ -66,6 +75,7 @@ function renderList() {
           (agent) => `<button class="agent" data-action="edit" data-scope="${agent.scope}" data-slug="${escapeHtml(agent.slug)}">
             <strong>${escapeHtml(agent.displayName)}</strong>
             <span class="meta">${escapeHtml(agent.description || agent.role || agent.slug)}</span>
+            ${colliding.has(agent.slug) ? `<span class="meta">/${escapeHtml(agent.slug)} is also saved in the other scope. Cursor cannot tell the two apart.</span>` : ""}
           </button>`,
         )
         .join("")}`;
@@ -148,6 +158,8 @@ function renderEditor() {
       <div class="label">Tools</div>
       <label class="check"><input id="readonly" type="checkbox" ${draft.readonly ? "checked" : ""} /> <span>Read-only <i class="badge">native readonly</i></span></label>
       <p class="meta">Subagents inherit the parent agent's tools. A per-tool allow list is not a public subagent field.</p>
+      <label class="check"><input id="isBackground" type="checkbox" ${draft.isBackground ? "checked" : ""} /> <span>Background <i class="badge">native is_background</i></span></label>
+      <p class="meta">A background agent does not block the chat. An orchestra cannot use it, because the next phase waits for a result.</p>
       <div class="stack${advanced ? "" : " hidden"}">
         ${field("Scope", `<select id="scope"><option value="workspace" ${draft.scope === "workspace" ? "selected" : ""}>Workspace .cursor/agents</option><option value="global" ${draft.scope === "global" ? "selected" : ""}>Global ~/.cursor/agents</option></select>`)}
         ${field("Profile", `<select id="profileId"><option value="">None</option>${profiles.map((profile) => `<option value="${escapeHtml(profile.id)}" ${draft.profileId === profile.id ? "selected" : ""}>${escapeHtml(profile.name)}</option>`).join("")}</select>`, "compiled")}
@@ -159,7 +171,6 @@ function renderEditor() {
         ${field("Behavior", `<textarea id="behavior">${escapeHtml(draft.behavior)}</textarea>`, "prompt")}
         ${field("Project rules", `<textarea id="projectRules">${escapeHtml(draft.projectRules)}</textarea>`, "prompt")}
         ${field("Skills", `<textarea id="skills">${escapeHtml(draft.skills)}</textarea>`, "prompt")}
-        <label class="check"><input id="isBackground" type="checkbox" ${draft.isBackground ? "checked" : ""} /> <span>Background <i class="badge">native is_background</i></span></label>
         ${unsupported
           .filter((item) => item.id !== "launch")
           .map((item) => `<div class="limit"><strong>${escapeHtml(item.label)}</strong> — unsupported per agent. ${escapeHtml(item.reason)}</div>`)
@@ -258,18 +269,34 @@ function blankOrchestra() {
 function renderOrchestra() {
   const orchestra = state.orchestra;
   const agents = state.snapshot?.agents || [];
-  const options = agents
+  const colliding = ambiguousSlugs(agents);
+  const selectable = agents.filter((agent) => !colliding.has(agent.slug) && !agent.isBackground);
+  const options = selectable
     .map((agent) => `<option value="${agent.scope}:${agent.slug}">${escapeHtml(agent.displayName)} · ${agent.scope} · /${escapeHtml(agent.slug)}</option>`)
     .join("");
+  const collisionNote = colliding.size
+    ? `<p class="meta">These slugs exist in both project and global scope, so they are hidden here: ${[...colliding].map((slug) => `/${escapeHtml(slug)}`).join(", ")}. Delete one copy, then add the agent again.</p>`
+    : "";
+  const backgroundNote = agents.some((agent) => agent.isBackground)
+    ? `<p class="meta">Background agents are hidden here. An orchestra waits for each phase, and a background agent does not return a result. Turn off Background on the agent to use it.</p>`
+    : "";
   const steps = orchestra.steps
     .map((step, index) => {
+      const match = agents.find((agent) => agent.scope === step.scope && agent.slug === step.slug);
+      const blocked = step.slug && colliding.has(step.slug);
+      const backgroundStep = Boolean(match?.isBackground) && !blocked;
       const selected = `${step.scope}:${step.slug}`;
+      const picker = blocked
+        ? `<p class="meta">/${escapeHtml(step.slug)} exists as both a project and a global agent. Remove this step, or delete one copy and pick the agent again.</p>`
+        : backgroundStep
+          ? `<p class="meta">/${escapeHtml(step.slug)} runs in the background, so it cannot hand a result to the next phase. Open the agent, turn off Background, and pick it again.</p>`
+          : `<select data-step-agent="${index}">
+            <option value="">Choose an agent</option>
+            ${selectable.map((agent) => `<option value="${agent.scope}:${agent.slug}" ${selected === `${agent.scope}:${agent.slug}` ? "selected" : ""}>${escapeHtml(agent.displayName)} · ${agent.scope} · /${escapeHtml(agent.slug)}</option>`).join("")}
+          </select>`;
       return `<div class="template">
         <div>
-          <select data-step-agent="${index}">
-            <option value="">Choose an agent</option>
-            ${agents.map((agent) => `<option value="${agent.scope}:${agent.slug}" ${selected === `${agent.scope}:${agent.slug}` ? "selected" : ""}>${escapeHtml(agent.displayName)} · ${agent.scope} · /${escapeHtml(agent.slug)}</option>`).join("")}
-          </select>
+          ${picker}
           <input data-step-task="${index}" value="${escapeHtml(step.task)}" placeholder="What this step should do" />
         </div>
         <span class="row">
@@ -293,6 +320,8 @@ function renderOrchestra() {
       ${field("Description", `<textarea id="orchestraDescription" rows="2">${escapeHtml(orchestra.description)}</textarea>`)}
       ${field("Save to", `<select id="orchestraScope" ${orchestra.persistedSlug ? "disabled" : ""}><option value="workspace" ${orchestra.scope === "workspace" ? "selected" : ""}>Workspace</option><option value="global" ${orchestra.scope === "global" ? "selected" : ""}>Global</option></select>`)}
       <div class="label">Steps</div>
+      ${collisionNote}
+      ${backgroundNote}
       ${steps || `<p class="meta">No agents in this orchestra yet.</p>`}
       <div class="actions cols-2"><button data-action="add-step" ${options ? "" : "disabled"}>Add agent</button></div>
       <div class="actions cols-2">
@@ -312,12 +341,16 @@ function readOrchestraFromDom() {
   orchestra.description = document.getElementById("orchestraDescription").value;
   orchestra.scope = document.getElementById("orchestraScope").value;
   orchestra.steps = orchestra.steps.map((step, index) => {
-    const value = document.querySelector(`[data-step-agent="${index}"]`)?.value || "";
-    const [scope, slug] = value.split(":");
+    const select = document.querySelector(`[data-step-agent="${index}"]`);
+    const task = document.querySelector(`[data-step-task="${index}"]`)?.value || "";
+    if (!select) {
+      return { ...step, task };
+    }
+    const [scope, slug] = (select.value || "").split(":");
     return {
       scope: scope || step.scope,
       slug: slug || "",
-      task: document.querySelector(`[data-step-task="${index}"]`)?.value || "",
+      task,
     };
   });
   if (!orchestra.persistedSlug && orchestra.displayName) {
@@ -360,6 +393,7 @@ function readDraftFromDom() {
     draft.role = value("role");
     draft.instructions = value("instructions");
     draft.readonly = Boolean(document.getElementById("readonly")?.checked);
+    draft.isBackground = Boolean(document.getElementById("isBackground")?.checked);
   }
   if (document.getElementById("responsibilities")) {
     draft.scope = value("scope") || draft.scope;
@@ -371,7 +405,6 @@ function readDraftFromDom() {
     draft.behavior = value("behavior");
     draft.projectRules = value("projectRules");
     draft.skills = value("skills");
-    draft.isBackground = Boolean(document.getElementById("isBackground")?.checked);
   }
   if (draft.displayName) {
     const slug = draft.displayName.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

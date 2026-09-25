@@ -184,6 +184,36 @@ test("store writes a real markdown subagent", () => {
   store.delete("workspace", copy.slug);
   assert.equal(store.list().length, 1);
   assert.throws(() => store.delete("workspace", "../../outside"), /Invalid agent identifier/);
+  assert.throws(
+    () =>
+      store.save(
+        {
+          slug: "code-reviewer",
+          scope: "global",
+          icon: "",
+          displayName: "Code Reviewer",
+          description: "Reviews architecture.",
+          role: "You review.",
+          instructions: "Do not edit.",
+          responsibilities: [],
+          constraints: [],
+          context: [],
+          readonly: true,
+          isBackground: false,
+          model: "inherit",
+          outputFormat: "",
+          behavior: "",
+          projectRules: "",
+          skills: "",
+          mcpNote: "",
+          hooksNote: "",
+          environmentNote: "",
+        },
+        [],
+      ),
+    /already exists as a workspace agent/,
+  );
+  assert.equal(store.list().length, 1);
 });
 
 test("orchestra writes an ordered runbook", () => {

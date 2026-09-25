@@ -121,7 +121,7 @@ export class AgentStudioService {
   }
 
   generate(prompt: string, scope: AgentScope, context: ContextItem[]): { draft: AgentDraft; note: string } {
-    const taken = new Set(this.listAgents().filter((agent) => agent.scope === scope).map((agent) => agent.slug));
+    const taken = new Set(this.listAgents().map((agent) => agent.slug));
     const generated = generateAgent({
       prompt,
       scope,

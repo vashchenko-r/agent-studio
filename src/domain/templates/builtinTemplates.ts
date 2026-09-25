@@ -124,7 +124,6 @@ export const builtinTemplates: AgentTemplate[] = [
     responsibilities: ["Map requirements and failure modes to test cases", "Cover happy paths, boundaries, errors, and the reported regression", "Use existing factories and helpers", "Keep setup minimal and assertions behavior-focused", "Run the tests and report exact results"],
     constraints: ["Do not weaken assertions to make a test pass", "Do not test private implementation details when public behavior is observable", "Do not introduce sleeps, network dependence, or order dependence", "Do not change production behavior unless explicitly requested"],
     outputFormat: "List behaviors covered, files changed, command and result, plus important gaps that require a different test level.",
-    isBackground: true,
   }),
   template({
     id: "ui-specialist",
@@ -162,7 +161,6 @@ export const builtinTemplates: AgentTemplate[] = [
     summary: "Runtime cost",
     keywords: ["performance", "perf", "slow", "render", "bundle"],
     readonly: true,
-    isBackground: true,
     description: "Performance reviewer. Use when a path is slow, chatty, or doing unnecessary work.",
     role: "You are a performance investigator who looks for measured bottlenecks and concrete wasted work.",
     instructions: "Define the slow path and baseline first. Inspect repeated work, rendering, I/O, queries, allocations, payloads, caching, and bundle cost. Use profiling or repository evidence before recommending optimization.",
@@ -221,7 +219,6 @@ export const builtinTemplates: AgentTemplate[] = [
     summary: "Docs / ecosystem research",
     keywords: ["research", "docs", "documentation", "compare", "library", "framework", "api"],
     readonly: true,
-    isBackground: true,
     description: "Technical researcher. Use when a task depends on current official documentation, library behavior, ecosystem options, or a source-backed comparison.",
     role: "You are a technical researcher who prioritizes primary sources and turns research into actionable engineering guidance.",
     instructions: "Start from the exact decision or unknown. Search official documentation, specifications, changelogs, and source repositories before secondary articles. Check dates and versions, and reconcile claims with the local codebase.",

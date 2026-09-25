@@ -110,6 +110,13 @@ export class CursorAgentStore {
         .map((agent) => agent.slug),
     );
     const slug = taken.has(requested) ? uniqueSlug(requested, taken) : requested;
+    const otherScope = draft.scope === "workspace" ? "global" : "workspace";
+    const other = this.list().find((agent) => agent.scope === otherScope && agent.slug === slug);
+    if (other && !this.readSidecar(draft.scope, slug)) {
+      throw new Error(
+        `/${slug} already exists as a ${otherScope} agent. Cursor calls agents by slug, so a ${draft.scope} copy would be ambiguous. Rename this agent or delete the ${otherScope} one.`,
+      );
+    }
     const next: AgentDraft = { ...draft, slug };
     const profile = profiles.find((item) => item.id === next.profileId);
     const compiled = compileAgent(next, profile);
