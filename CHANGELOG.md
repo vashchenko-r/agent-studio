@@ -2,6 +2,12 @@
 
 All notable changes to Agent Studio are documented here.
 
+## 0.1.9
+
+- Refused to save a second agent with a slug that already exists in the other scope, because Cursor calls agents by `/slug`.
+- Hid ambiguous and background agents from orchestra steps and explained how to make them available.
+- Left background mode off for new agents and showed the Background control in the main editor.
+
 ## 0.1.8
 
 - Rewrote the Marketplace README into a shorter guide with direct links to the repository, issues, and discussions.
