@@ -184,36 +184,72 @@ test("store writes a real markdown subagent", () => {
   store.delete("workspace", copy.slug);
   assert.equal(store.list().length, 1);
   assert.throws(() => store.delete("workspace", "../../outside"), /Invalid agent identifier/);
-  assert.throws(
-    () =>
-      store.save(
-        {
-          slug: "code-reviewer",
-          scope: "global",
-          icon: "",
-          displayName: "Code Reviewer",
-          description: "Reviews architecture.",
-          role: "You review.",
-          instructions: "Do not edit.",
-          responsibilities: [],
-          constraints: [],
-          context: [],
-          readonly: true,
-          isBackground: false,
-          model: "inherit",
-          outputFormat: "",
-          behavior: "",
-          projectRules: "",
-          skills: "",
-          mcpNote: "",
-          hooksNote: "",
-          environmentNote: "",
-        },
-        [],
-      ),
-    /already exists as a workspace agent/,
+  const globalAgent = store.save(
+    {
+      slug: "code-reviewer",
+      scope: "global",
+      icon: "",
+      displayName: "Code Reviewer",
+      description: "Reviews architecture.",
+      role: "You review.",
+      instructions: "Do not edit.",
+      responsibilities: [],
+      constraints: [],
+      context: [],
+      readonly: true,
+      isBackground: false,
+      model: "inherit",
+      outputFormat: "",
+      behavior: "",
+      projectRules: "",
+      skills: "",
+      mcpNote: "",
+      hooksNote: "",
+      environmentNote: "",
+    },
+    [],
   );
-  assert.equal(store.list().length, 1);
+  assert.equal(globalAgent.slug, "global-code-reviewer");
+  assert.equal(globalAgent.displayName, "Global Code Reviewer");
+  assert.match(fs.readFileSync(globalAgent.nativePath, "utf8"), /name: global-code-reviewer/);
+  assert.match(fs.readFileSync(globalAgent.nativePath, "utf8"), /# Global Code Reviewer/);
+  assert.equal(fs.existsSync(saved.nativePath), true);
+  const again = store.save(globalAgent, []);
+  assert.equal(again.slug, "global-code-reviewer");
+  assert.equal(again.displayName, "Global Code Reviewer");
+  assert.equal(store.list().length, 2);
+});
+
+test("listing renames an existing global agent so its short slug is free", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "agent-studio-migrate-"));
+  const agentsDir = path.join(root, "user-agents");
+  const studioDir = path.join(root, "user-studio");
+  fs.mkdirSync(agentsDir);
+  fs.mkdirSync(studioDir);
+  fs.writeFileSync(
+    path.join(agentsDir, "react-expert.md"),
+    "---\nname: react-expert\ndescription: \"Create a senior React expert\"\nmodel: inherit\nreadonly: true\nis_background: false\n---\n\n# React Expert\n\nYou are React Expert.\n",
+  );
+  fs.writeFileSync(
+    path.join(studioDir, "react-expert.json"),
+    `${JSON.stringify({ slug: "react-expert", scope: "global", displayName: "React Expert", description: "Create a senior React expert", role: "You are React Expert.", instructions: "", responsibilities: [], constraints: [], context: [], readonly: true, isBackground: false, model: "inherit", outputFormat: "", behavior: "", projectRules: "", skills: "", mcpNote: "", hooksNote: "", environmentNote: "", createdAt: "2026-09-24T00:00:00.000Z", updatedAt: "2026-09-24T00:00:00.000Z", imported: false }, null, 2)}\n`,
+  );
+  const store = new CursorAgentStore({
+    workspaceRoot: root,
+    userAgentsDir: agentsDir,
+    userStudioDir: studioDir,
+  });
+  const [agent] = store.list();
+  assert.equal(agent?.slug, "global-react-expert");
+  assert.equal(agent?.displayName, "Global React Expert");
+  assert.equal(fs.existsSync(path.join(agentsDir, "react-expert.md")), false);
+  assert.match(fs.readFileSync(path.join(agentsDir, "global-react-expert.md"), "utf8"), /name: global-react-expert/);
+  assert.match(fs.readFileSync(path.join(agentsDir, "global-react-expert.md"), "utf8"), /You are React Expert/);
+  assert.equal(fs.existsSync(path.join(studioDir, "react-expert.json")), false);
+  const sidecar = JSON.parse(fs.readFileSync(path.join(studioDir, "global-react-expert.json"), "utf8")) as { slug: string; createdAt: string };
+  assert.equal(sidecar.slug, "global-react-expert");
+  assert.equal(sidecar.createdAt, "2026-09-24T00:00:00.000Z");
+  assert.equal(store.list()[0]?.slug, "global-react-expert");
 });
 
 test("orchestra writes an ordered runbook", () => {

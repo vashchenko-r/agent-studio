@@ -8,6 +8,25 @@ export function slugify(value: string): string {
   return slug || "agent";
 }
 
+const GLOBAL_SLUG_PREFIX = "global-";
+
+/** Cursor calls an agent by slug, so a global agent must not take the short name a project agent uses. */
+export function withGlobalSlugPrefix(slug: string): string {
+  const safe = slugify(slug);
+  if (safe === "global" || safe.startsWith(GLOBAL_SLUG_PREFIX)) {
+    return safe;
+  }
+  return `${GLOBAL_SLUG_PREFIX}${safe}`;
+}
+
+export function withGlobalDisplayPrefix(displayName: string): string {
+  const trimmed = displayName.trim();
+  if (!trimmed || /^global\b/i.test(trimmed)) {
+    return trimmed;
+  }
+  return `Global ${trimmed}`;
+}
+
 export function assertSafeSlug(value: unknown): asserts value is string {
   if (
     typeof value !== "string" ||

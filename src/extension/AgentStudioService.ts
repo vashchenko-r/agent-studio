@@ -6,6 +6,7 @@ import type { AgentTemplate } from "../domain/types";
 import { compileAgent } from "../domain/agents/compileAgent";
 import { compileOrchestra, validateOrchestra } from "../domain/orchestras/compileOrchestra";
 import { generateAgent } from "../domain/agents/generateAgent";
+import { withGlobalDisplayPrefix, withGlobalSlugPrefix } from "../domain/ids";
 import { findProfile } from "../domain/profiles/builtinProfiles";
 import { capabilityReport } from "../integrations/cursor/capabilities";
 import { CursorAgentLauncher } from "../integrations/cursor/CursorAgentLauncher";
@@ -152,11 +153,13 @@ export class AgentStudioService {
 
   preview(draft: AgentDraft): { markdown: string; nativePath: string; profileName?: string } {
     const profile = findProfile(this.profiles.list(), draft.profileId);
-    const compiled = compileAgent(draft, profile);
+    const slug = draft.scope === "global" ? withGlobalSlugPrefix(draft.slug || draft.displayName) : draft.slug;
+    const displayName = draft.scope === "global" ? withGlobalDisplayPrefix(draft.displayName) : draft.displayName;
+    const compiled = compileAgent({ ...draft, slug, displayName }, profile);
     const dir = this.store.agentsDir(draft.scope);
     return {
       markdown: compiled.markdown,
-      nativePath: dir ? path.join(dir, `${draft.slug}.md`) : "(open a workspace to save a project agent)",
+      nativePath: dir ? path.join(dir, `${slug}.md`) : "(open a workspace to save a project agent)",
       profileName: profile?.name,
     };
   }
