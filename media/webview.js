@@ -13,6 +13,7 @@ const state = {
   createContext: [],
   orchestra: null,
   profileForm: emptyProfileForm(),
+  confirming: "",
 };
 
 const app = document.getElementById("app");
@@ -189,11 +190,11 @@ function renderEditor() {
         ${field("Communication", `<textarea id="profileCommunication" placeholder="One item per line">${escapeHtml(state.profileForm.communication)}</textarea>`)}
         <div class="actions cols-2"><button data-action="save-profile">${state.profileForm.id ? "Save profile" : "Create profile"}</button><button data-action="save-preset">Save context</button></div>
       </div>
-      <div class="actions cols-3">
-        <button data-action="inspect">Inspect</button>
-        <button data-action="duplicate" ${draft.slug ? "" : "disabled"}>Duplicate</button>
-        <button data-action="remove" ${draft.slug ? "" : "disabled"}>Delete</button>
-      </div>
+      ${
+        state.confirming === "agent"
+          ? `<div class="confirm-delete"><p>Delete "${escapeHtml(draft.displayName)}"? This removes its Cursor agent file.</p><div class="actions cols-2"><button data-action="cancel-remove">Cancel</button><button class="primary" data-action="confirm-remove">Delete</button></div></div>`
+          : `<div class="actions cols-3"><button data-action="inspect">Inspect</button><button data-action="duplicate" ${draft.slug ? "" : "disabled"}>Duplicate</button><button data-action="remove" ${draft.slug ? "" : "disabled"}>Delete</button></div>`
+      }
     </div>
   </div>`;
 }
@@ -425,7 +426,8 @@ function blankFromTemplate(template) {
 }
 
 document.body.addEventListener("click", (event) => {
-  const target = event.target.closest("[data-action]");
+  const origin = event.target instanceof Element ? event.target : event.target.parentElement;
+  const target = origin?.closest("[data-action]");
   if (!target) {
     return;
   }
@@ -477,12 +479,12 @@ document.body.addEventListener("click", (event) => {
     return;
   }
   if (action === "delete-orchestra") {
-    if (!window.confirm(`Delete orchestra "${state.orchestra.displayName}"?`)) {
-      return;
-    }
-    post({ type: "deleteOrchestra", scope: state.orchestra.scope, slug: state.orchestra.slug });
-    state.screen = "list";
-    render();
+    post({
+      type: "deleteOrchestra",
+      scope: state.orchestra.scope,
+      slug: state.orchestra.slug,
+      displayName: state.orchestra.displayName,
+    });
     return;
   }
   if (action === "run-orchestra") {
@@ -504,12 +506,14 @@ document.body.addEventListener("click", (event) => {
   if (action === "back") {
     state.screen = "list";
     state.notice = "";
+    state.confirming = "";
     render();
     return;
   }
   if (action === "edit") {
     const agent = state.snapshot.agents.find((item) => item.scope === target.dataset.scope && item.slug === target.dataset.slug);
     state.draft = { ...agent, context: [...agent.context], responsibilities: [...agent.responsibilities], constraints: [...agent.constraints], persistedSlug: true };
+    state.confirming = "";
     state.screen = "editor";
     state.notice = agent.imported ? "This file was imported from Cursor's agents folder. Saving rewrites it in Agent Studio's sectioned prompt." : "";
     render();
@@ -537,12 +541,6 @@ document.body.addEventListener("click", (event) => {
   }
   if (action === "save") {
     readDraftFromDom();
-    if (
-      state.draft.imported &&
-      !window.confirm("This agent was imported from an existing Markdown file. Saving will rewrite its prompt into Agent Studio's structured format. Continue?")
-    ) {
-      return;
-    }
     post({ type: "save", draft: state.draft });
     return;
   }
@@ -551,11 +549,21 @@ document.body.addEventListener("click", (event) => {
     return;
   }
   if (action === "remove") {
-    if (!window.confirm(`Delete agent "${state.draft.displayName}"? This removes its Cursor agent file.`)) {
-      return;
-    }
-    post({ type: "delete", scope: state.draft.scope, slug: state.draft.slug });
+    state.confirming = "agent";
+    render();
+    return;
+  }
+  if (action === "cancel-remove") {
+    state.confirming = "";
+    render();
+    return;
+  }
+  if (action === "confirm-remove") {
+    const draft = state.draft;
+    state.confirming = "";
+    post({ type: "delete", scope: draft.scope, slug: draft.slug, displayName: draft.displayName });
     state.screen = "list";
+    state.draft = null;
     render();
     return;
   }
@@ -629,9 +637,6 @@ document.body.addEventListener("click", (event) => {
     return;
   }
   if (action === "delete-profile") {
-    if (!window.confirm("Delete this custom profile?")) {
-      return;
-    }
     post({ type: "deleteProfile", id: target.dataset.id });
     return;
   }
@@ -732,6 +737,13 @@ window.addEventListener("message", (event) => {
     };
     state.screen = "orchestra";
     state.notice = `Saved the runbook at ${message.orchestra.nativePath}`;
+    render();
+    return;
+  }
+  if (message.type === "deleted") {
+    state.screen = "list";
+    state.notice = "";
+    state.draft = null;
     render();
     return;
   }

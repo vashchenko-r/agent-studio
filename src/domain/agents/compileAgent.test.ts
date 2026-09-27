@@ -252,6 +252,54 @@ test("listing renames an existing global agent so its short slug is free", () =>
   assert.equal(store.list()[0]?.slug, "global-react-expert");
 });
 
+test("deleting a global agent removes the prefixed file and keeps the project agent", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "agent-studio-delete-"));
+  const store = new CursorAgentStore({
+    workspaceRoot: root,
+    userAgentsDir: path.join(root, "user-agents"),
+    userStudioDir: path.join(root, "user-studio"),
+  });
+  const draft = {
+    slug: "code-reviewer",
+    scope: "workspace" as const,
+    icon: "",
+    displayName: "Code Reviewer",
+    description: "Reviews architecture.",
+    role: "You review.",
+    instructions: "Do not edit.",
+    responsibilities: [],
+    constraints: [],
+    context: [],
+    readonly: true,
+    isBackground: false,
+    model: "inherit",
+    outputFormat: "",
+    behavior: "",
+    projectRules: "",
+    skills: "",
+    mcpNote: "",
+    hooksNote: "",
+    environmentNote: "",
+  };
+  const project = store.save(draft, []);
+  const globalAgent = store.save({ ...draft, scope: "global" }, []);
+  assert.equal(globalAgent.slug, "global-code-reviewer");
+  store.delete("global", globalAgent.slug);
+  assert.equal(fs.existsSync(globalAgent.nativePath), false);
+  assert.equal(fs.existsSync(path.join(root, "user-studio", "global-code-reviewer.json")), false);
+  assert.equal(fs.existsSync(project.nativePath), true);
+  assert.equal(store.list().map((agent) => agent.slug).join(","), "code-reviewer");
+
+  const agentsDir = path.join(root, "user-agents");
+  fs.writeFileSync(
+    path.join(agentsDir, "global-react-expert.md"),
+    "---\nname: react-expert\ndescription: React\n---\n\n# React Expert\n\nYou are React Expert.\n",
+  );
+  store.delete("global", "react-expert");
+  assert.equal(fs.existsSync(path.join(agentsDir, "global-react-expert.md")), false);
+  assert.equal(fs.existsSync(project.nativePath), true);
+});
+
 test("orchestra writes an ordered runbook", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "agent-studio-orchestra-"));
   const agents = new CursorAgentStore({

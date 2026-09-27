@@ -161,6 +161,8 @@ export class CursorAgentStore {
       imported: false,
       previousSlug: existing?.previousSlug,
     };
+    delete (record as Sidecar & { nativePath?: string; persistedSlug?: boolean }).nativePath;
+    delete (record as Sidecar & { persistedSlug?: boolean }).persistedSlug;
     writeJson(path.join(studio, `${slug}.json`), record);
     if (owned && owned.slug !== slug) {
       this.delete(draft.scope, owned.slug);
@@ -189,17 +191,34 @@ export class CursorAgentStore {
   }
 
   delete(scope: AgentScope, slug: string): void {
-    const native = this.agentsDir(scope);
+    assertSafeSlug(slug);
+    const nativeDir = this.agentsDir(scope);
     const studio = this.studioDir(scope);
-    if (native) {
-      fs.rmSync(safeRecordPath(native, slug, ".md"), { force: true });
+    const ids = new Set<string>([slug]);
+    for (const agent of this.readAll()) {
+      if (agent.scope !== scope) {
+        continue;
+      }
+      const fileSlug = path.basename(agent.nativePath, ".md");
+      if (agent.slug !== slug && fileSlug !== slug) {
+        continue;
+      }
+      for (const id of [agent.slug, fileSlug]) {
+        if (id === slugify(id)) {
+          ids.add(id);
+        }
+      }
     }
-    if (studio) {
-      fs.rmSync(safeRecordPath(studio, slug, ".json"), { force: true });
-    }
-    if (this.roots.pluginAgentsDir) {
-      const pluginSlug = `${scope}-${slug}`;
-      fs.rmSync(safeRecordPath(this.roots.pluginAgentsDir, pluginSlug, ".md"), { force: true });
+    for (const id of ids) {
+      if (nativeDir) {
+        fs.rmSync(safeRecordPath(nativeDir, id, ".md"), { force: true });
+      }
+      if (studio) {
+        fs.rmSync(safeRecordPath(studio, id, ".json"), { force: true });
+      }
+      if (this.roots.pluginAgentsDir) {
+        fs.rmSync(safeRecordPath(this.roots.pluginAgentsDir, `${scope}-${id}`, ".md"), { force: true });
+      }
     }
   }
 

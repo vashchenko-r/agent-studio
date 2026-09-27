@@ -290,6 +290,20 @@ pre {
 .actions.cols-2 { grid-template-columns: 1fr 1fr; }
 .actions.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
 
+.confirm-delete {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 -12px -12px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--vscode-sideBar-background);
+}
+
+.confirm-delete p { margin: 0; }
+
 .actions button { width: 100%; padding: 0 6px; }
 
 .hidden { display: none; }

@@ -2,6 +2,11 @@
 
 All notable changes to Agent Studio are documented here.
 
+## 0.1.11
+
+- Confirmed Delete inside the Agent Studio panel, because the sidebar cannot show a browser confirm dialog.
+- Removed the agent file when its filename and frontmatter name differ, including prefixed global agents.
+
 ## 0.1.10
 
 - Prefixed global agent slugs with `global-` and renamed existing global agents so short names stay available in a project.

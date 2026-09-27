@@ -5,16 +5,16 @@ import type { AgentDraft, AgentRecord, AgentScope, ContextItem, OrchestraDraft, 
 type HostMessage =
   | { type: "ready" }
   | { type: "generate"; prompt: string; scope: AgentScope; context: ContextItem[] }
-  | { type: "save"; draft: AgentDraft }
+  | { type: "save"; draft: AgentDraft & { imported?: boolean } }
   | { type: "duplicate"; scope: AgentScope; slug: string }
-  | { type: "delete"; scope: AgentScope; slug: string }
+  | { type: "delete"; scope: AgentScope; slug: string; displayName?: string }
   | { type: "preview"; draft: AgentDraft }
   | { type: "pickContext"; kind: "file" | "folder" | "workspace" | "selection" | "rules" | "config" }
   | { type: "saveProfile"; profile: { id?: string; name: string; summary: string; expertise: string[]; principles: string[]; communication: string[] } }
   | { type: "deleteProfile"; id: string }
   | { type: "savePreset"; name: string; context: ContextItem[] }
   | { type: "saveOrchestra"; draft: OrchestraDraft }
-  | { type: "deleteOrchestra"; scope: AgentScope; slug: string }
+  | { type: "deleteOrchestra"; scope: AgentScope; slug: string; displayName?: string }
   | { type: "runOrchestra"; scope: AgentScope; slug: string };
 
 export type ViewMessage =
@@ -27,7 +27,8 @@ export type ViewMessage =
   | { type: "contextPicked"; items: ContextItem[] }
   | { type: "notice"; message: string }
   | { type: "saved"; agent: AgentRecord }
-  | { type: "orchestraSaved"; orchestra: OrchestraRecord };
+  | { type: "orchestraSaved"; orchestra: OrchestraRecord }
+  | { type: "deleted" };
 
 export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
   static readonly viewId = "agentStudio.main";
@@ -83,14 +84,25 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
           this.post({ type: "generated", draft: generated.draft, note: generated.note });
           return;
         }
-        case "save":
+        case "save": {
+          if (message.draft.imported) {
+            const confirmed = await this.confirm(
+              "This agent was imported from an existing Markdown file. Saving will rewrite its prompt into Agent Studio's structured format. Continue?",
+              "Continue",
+            );
+            if (!confirmed) {
+              return;
+            }
+          }
           this.post({ type: "saved", agent: this.service.save(message.draft) });
           return;
+        }
         case "duplicate":
           this.post({ type: "saved", agent: this.service.duplicate(message.scope, message.slug) });
           return;
         case "delete":
           this.service.delete(message.scope, message.slug);
+          this.post({ type: "deleted" });
           return;
         case "preview":
           this.post({ type: "previewResult", ...this.service.preview(message.draft) });
@@ -101,18 +113,30 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
         case "saveProfile":
           this.service.saveProfile(message.profile);
           return;
-        case "deleteProfile":
+        case "deleteProfile": {
+          const confirmed = await this.confirm("Delete this custom profile?", "Delete");
+          if (!confirmed) {
+            return;
+          }
           this.service.deleteProfile(message.id);
           return;
+        }
         case "savePreset":
           this.service.savePreset(message.name, message.context);
           return;
         case "saveOrchestra":
           this.post({ type: "orchestraSaved", orchestra: this.service.saveOrchestra(message.draft) });
           return;
-        case "deleteOrchestra":
+        case "deleteOrchestra": {
+          const name = message.displayName?.trim() || message.slug;
+          const confirmed = await this.confirm(`Delete orchestra "${name}"?`, "Delete");
+          if (!confirmed) {
+            return;
+          }
           this.service.deleteOrchestra(message.scope, message.slug);
+          this.post({ type: "deleted" });
           return;
+        }
         case "runOrchestra":
           await this.service.runOrchestra(message.scope, message.slug);
           return;
@@ -124,6 +148,11 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
       this.post({ type: "notice", message: text });
       void vscode.window.showErrorMessage(text);
     }
+  }
+
+  private async confirm(message: string, action: string): Promise<boolean> {
+    const choice = await vscode.window.showWarningMessage(message, { modal: true }, action);
+    return choice === action;
   }
 
   private html(webview: vscode.Webview): string {
