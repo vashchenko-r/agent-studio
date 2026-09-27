@@ -2,6 +2,11 @@
 
 All notable changes to Agent Studio are documented here.
 
+## 0.1.10
+
+- Prefixed global agent slugs with `global-` and renamed existing global agents so short names stay available in a project.
+- Rewrote built-in templates with explicit delegation triggers and a short "When invoked" procedure.
+
 ## 0.1.9
 
 - Refused to save a second agent with a slug that already exists in the other scope, because Cursor calls agents by `/slug`.
