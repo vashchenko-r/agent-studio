@@ -95,7 +95,9 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
               return;
             }
           }
-          this.post({ type: "saved", agent: this.service.save(message.draft) });
+          const agent = this.service.save(message.draft);
+          this.post({ type: "saved", agent });
+          await this.openNativeFile(agent.nativePath);
           return;
         }
         case "duplicate":
@@ -125,9 +127,12 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
         case "savePreset":
           this.service.savePreset(message.name, message.context);
           return;
-        case "saveOrchestra":
-          this.post({ type: "orchestraSaved", orchestra: this.service.saveOrchestra(message.draft) });
+        case "saveOrchestra": {
+          const orchestra = this.service.saveOrchestra(message.draft);
+          this.post({ type: "orchestraSaved", orchestra });
+          await this.openNativeFile(orchestra.nativePath);
           return;
+        }
         case "deleteOrchestra": {
           const name = message.displayName?.trim() || message.slug;
           const confirmed = await this.confirm(`Delete orchestra "${name}"?`, "Delete");
@@ -143,8 +148,7 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
           return;
         case "createEmpty": {
           const agent = this.service.createEmptyAgent(message.scope);
-          const document = await vscode.workspace.openTextDocument(vscode.Uri.file(agent.nativePath));
-          await vscode.window.showTextDocument(document, { preview: false });
+          await this.openNativeFile(agent.nativePath);
           this.post({
             type: "notice",
             message: `Created ${agent.nativePath}. Comments in the file describe each field.`,
@@ -159,6 +163,11 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
       this.post({ type: "notice", message: text });
       void vscode.window.showErrorMessage(text);
     }
+  }
+
+  private async openNativeFile(filePath: string): Promise<void> {
+    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+    await vscode.window.showTextDocument(document, { preview: false });
   }
 
   private async confirm(message: string, action: string): Promise<boolean> {

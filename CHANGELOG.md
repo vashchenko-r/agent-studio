@@ -2,6 +2,10 @@
 
 All notable changes to Agent Studio are documented here.
 
+## 0.1.13
+
+- Saving an agent or an orchestra opens its Markdown file in the editor, including a global file under `~/.cursor/agents`.
+
 ## 0.1.12
 
 - Added Empty agent. It creates `.cursor/agents` in the open project and writes a blank subagent file with a comment on each field.

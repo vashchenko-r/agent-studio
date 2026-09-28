@@ -2,7 +2,7 @@
   "name": "agent-studio",
   "displayName": "Agent Studio",
   "description": "Create focused Cursor agents without writing Markdown frontmatter by hand.",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "publisher": "vashchenko-r",
   "license": "MIT",
   "repository": {

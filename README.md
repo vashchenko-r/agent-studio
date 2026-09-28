@@ -9,7 +9,7 @@ Choose a specialist, review its instructions, and save it as a normal Cursor sub
 1. Open **Agent Studio** in the Activity Bar.
 2. Choose a template or describe the agent you need.
 3. Review its role, rules, and context.
-4. Click **Save**. Cursor picks up the generated agent automatically.
+4. Click **Save**. The file opens in the editor, and Cursor picks up the agent automatically.
 
 To use it in chat, call it with `/agent-name`.
 
