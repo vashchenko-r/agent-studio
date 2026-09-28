@@ -7,6 +7,7 @@ import { compileAgent } from "../domain/agents/compileAgent";
 import { compileOrchestra, validateOrchestra } from "../domain/orchestras/compileOrchestra";
 import { generateAgent } from "../domain/agents/generateAgent";
 import { withGlobalDisplayPrefix, withGlobalSlugPrefix } from "../domain/ids";
+import { firstFileWorkspaceRoot } from "./workspaceRoot";
 import { findProfile } from "../domain/profiles/builtinProfiles";
 import { capabilityReport } from "../integrations/cursor/capabilities";
 import { CursorAgentLauncher } from "../integrations/cursor/CursorAgentLauncher";
@@ -55,14 +56,22 @@ export class AgentStudioService {
     this.api?.plugins.unregisterPath(this.registration.pluginsRoot);
   }
 
+  /** Re-read the open folder. Activation can happen in an empty window, before the project exists. */
+  private prepare(): void {
+    const root = firstFileWorkspaceRoot(vscode.workspace.workspaceFolders);
+    this.roots.workspaceRoot = root;
+    this.presets.setFile(root ? path.join(root, ".cursor", "agent-studio", "presets.json") : undefined);
+    const mirror = vscode.workspace.getConfiguration("agentStudio").get<boolean>("mirrorAgentsToPlugin", false);
+    this.roots.pluginAgentsDir = mirror ? this.registration.agentsDir : undefined;
+  }
+
   private listAgents(): AgentRecord[] {
     const orchestraKeys = new Set(this.orchestras.list().map((item) => `${item.scope}:${item.slug}`));
     return this.store.list().filter((agent) => !orchestraKeys.has(`${agent.scope}:${agent.slug}`));
   }
 
   snapshot(): StudioSnapshot {
-    const mirror = vscode.workspace.getConfiguration("agentStudio").get<boolean>("mirrorAgentsToPlugin", false);
-    this.roots.pluginAgentsDir = mirror ? this.registration.agentsDir : undefined;
+    this.prepare();
     return {
       agents: this.listAgents(),
       orchestras: this.orchestras.list(),
@@ -91,6 +100,7 @@ export class AgentStudioService {
   }
 
   showAgent(scope: AgentScope, slug: string, screen: "editor" | "inspector"): void {
+    this.prepare();
     const agent = this.store.get(scope, slug);
     if (!agent) {
       void vscode.window.showWarningMessage(`Agent Studio could not find ${slug}.`);
@@ -104,6 +114,7 @@ export class AgentStudioService {
   }
 
   async pickAgent(placeHolder: string): Promise<AgentRecord | undefined> {
+    this.prepare();
     const agents = this.listAgents();
     if (agents.length === 0) {
       void vscode.window.showInformationMessage("Agent Studio has no agents yet.");
@@ -122,6 +133,7 @@ export class AgentStudioService {
   }
 
   generate(prompt: string, scope: AgentScope, context: ContextItem[]): { draft: AgentDraft; note: string } {
+    this.prepare();
     const taken = new Set(this.listAgents().map((agent) => agent.slug));
     const generated = generateAgent({
       prompt,
@@ -135,23 +147,37 @@ export class AgentStudioService {
   }
 
   save(draft: AgentDraft): AgentRecord {
+    this.prepare();
     const saved = this.store.save(draft, this.profiles.list());
     this.refresh();
     return saved;
   }
 
+  createEmptyAgent(scope: AgentScope): AgentRecord {
+    this.prepare();
+    if (scope === "workspace" && !this.roots.workspaceRoot) {
+      throw new Error("Open a project folder first. Empty agent is saved in .cursor/agents inside that folder.");
+    }
+    const saved = this.store.createEmpty(scope);
+    this.refresh();
+    return saved;
+  }
+
   duplicate(scope: AgentScope, slug: string): AgentRecord {
+    this.prepare();
     const copy = this.store.duplicate(scope, slug, this.profiles.list());
     this.refresh();
     return copy;
   }
 
   delete(scope: AgentScope, slug: string): void {
+    this.prepare();
     this.store.delete(scope, slug);
     this.refresh();
   }
 
   preview(draft: AgentDraft): { markdown: string; nativePath: string; profileName?: string } {
+    this.prepare();
     const profile = findProfile(this.profiles.list(), draft.profileId);
     const slug = draft.scope === "global" ? withGlobalSlugPrefix(draft.slug || draft.displayName) : draft.slug;
     const displayName = draft.scope === "global" ? withGlobalDisplayPrefix(draft.displayName) : draft.displayName;
@@ -165,17 +191,20 @@ export class AgentStudioService {
   }
 
   saveOrchestra(draft: OrchestraDraft): OrchestraRecord {
+    this.prepare();
     const saved = this.orchestras.save(draft, this.listAgents());
     this.refresh();
     return saved;
   }
 
   deleteOrchestra(scope: AgentScope, slug: string): void {
+    this.prepare();
     this.orchestras.delete(scope, slug);
     this.refresh();
   }
 
   async runOrchestra(scope: AgentScope, slug: string): Promise<void> {
+    this.prepare();
     const orchestra = this.orchestras.list().find((item) => item.scope === scope && item.slug === slug);
     if (!orchestra) {
       throw new Error(`Orchestra ${slug} was not found.`);
@@ -228,6 +257,7 @@ export class AgentStudioService {
   }
 
   savePreset(name: string, context: ContextItem[]): ContextPreset {
+    this.prepare();
     const preset = this.presets.save(name, context);
     this.refresh();
     return preset;

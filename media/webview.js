@@ -14,6 +14,7 @@ const state = {
   orchestra: null,
   profileForm: emptyProfileForm(),
   confirming: "",
+  hadWorkspace: false,
 };
 
 const app = document.getElementById("app");
@@ -88,8 +89,9 @@ function renderList() {
       <button class="primary header-action" data-action="new">New</button>
     </header>
     <div class="search"><input id="search" placeholder="Search agents..." value="${escapeHtml(state.query)}" /></div>
+    <div class="empty-agent-row"><button data-action="empty-agent">Empty agent</button></div>
     ${state.notice ? `<div class="notice">${escapeHtml(state.notice)}</div>` : ""}
-    ${body || `<div class="empty">No agents yet. Create one, or add a markdown file to .cursor/agents.</div>`}
+    ${body || `<div class="empty">No agents yet. Empty agent creates .cursor/agents in this project and writes a blank file there.</div>`}
     <div class="section-label">Orchestras</div>
     <div class="group">
       ${(snapshot?.orchestras || [])
@@ -212,6 +214,8 @@ function renderCreate() {
       ${state.createContext.length ? `<div class="label">Initial context</div>${contextList(state.createContext)}` : ""}
       <div class="actions"><button class="primary" data-action="generate">Generate</button></div>
       <p class="meta">Generate fills a reviewable configuration locally. It does not call a model. Saving writes a real Cursor subagent file.</p>
+      <div class="actions"><button data-action="empty-agent">Empty agent</button></div>
+      <p class="meta">Empty agent creates the .cursor/agents folder in this project when you choose Workspace, and writes a blank file. A comment on each field says what to type.</p>
       <div class="section-label">Or start from a template</div>
       ${templates
         .map(
@@ -503,6 +507,18 @@ document.body.addEventListener("click", (event) => {
     render();
     return;
   }
+  if (action === "empty-agent") {
+    let scope = "workspace";
+    if (state.screen === "create") {
+      scope = document.getElementById("createScope")?.value || state.createScope;
+      state.createScope = scope;
+    }
+    state.screen = "list";
+    state.notice = "";
+    render();
+    post({ type: "createEmpty", scope });
+    return;
+  }
   if (action === "back") {
     state.screen = "list";
     state.notice = "";
@@ -669,9 +685,19 @@ window.addEventListener("message", (event) => {
   const message = event.data;
   if (message.type === "snapshot") {
     state.snapshot = message.snapshot;
-    if (!message.snapshot.hasWorkspace) {
+    const hasWorkspace = Boolean(message.snapshot.hasWorkspace);
+    if (!hasWorkspace) {
       state.createScope = "global";
+    } else if (!state.hadWorkspace) {
+      state.createScope = "workspace";
+      if (state.draft && !state.draft.persistedSlug && state.draft.scope === "global") {
+        state.draft.scope = "workspace";
+      }
+      if (state.orchestra && !state.orchestra.persistedSlug && state.orchestra.scope === "global") {
+        state.orchestra.scope = "workspace";
+      }
     }
+    state.hadWorkspace = hasWorkspace;
     render();
     return;
   }

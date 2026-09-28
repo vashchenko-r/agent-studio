@@ -15,7 +15,8 @@ type HostMessage =
   | { type: "savePreset"; name: string; context: ContextItem[] }
   | { type: "saveOrchestra"; draft: OrchestraDraft }
   | { type: "deleteOrchestra"; scope: AgentScope; slug: string; displayName?: string }
-  | { type: "runOrchestra"; scope: AgentScope; slug: string };
+  | { type: "runOrchestra"; scope: AgentScope; slug: string }
+  | { type: "createEmpty"; scope: AgentScope };
 
 export type ViewMessage =
   | { type: "snapshot"; snapshot: StudioSnapshot }
@@ -140,6 +141,16 @@ export class AgentStudioViewProvider implements vscode.WebviewViewProvider {
         case "runOrchestra":
           await this.service.runOrchestra(message.scope, message.slug);
           return;
+        case "createEmpty": {
+          const agent = this.service.createEmptyAgent(message.scope);
+          const document = await vscode.workspace.openTextDocument(vscode.Uri.file(agent.nativePath));
+          await vscode.window.showTextDocument(document, { preview: false });
+          this.post({
+            type: "notice",
+            message: `Created ${agent.nativePath}. Comments in the file describe each field.`,
+          });
+          return;
+        }
         default:
           return;
       }

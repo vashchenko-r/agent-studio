@@ -75,7 +75,11 @@ export class TemplateRepository {
 }
 
 export class PresetRepository {
-  constructor(private readonly file: string | undefined) {}
+  constructor(private file: string | undefined) {}
+
+  setFile(file: string | undefined): void {
+    this.file = file;
+  }
 
   list(): ContextPreset[] {
     if (!this.file) {

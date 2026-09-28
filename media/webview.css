@@ -104,6 +104,12 @@ textarea {
 
 .header-copy { min-width: 0; flex: 1; }
 .header-action { margin-left: auto; flex: none; }
+
+.empty-agent-row {
+  padding: 8px var(--pad) 0;
+}
+
+.empty-agent-row button { width: 100%; }
 .header h1 {
   margin: 0;
   font-size: 11px;

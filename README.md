@@ -15,6 +15,7 @@ To use it in chat, call it with `/agent-name`.
 
 ## What it helps with
 
+- **Blank start:** Empty agent creates `.cursor/agents` in the project and writes a file with a comment on every field.
 - **Specialists:** start from ready-made agents for code review, debugging, testing, frontend, backend, APIs, databases, research, planning, accessibility, performance, security, documentation, and verification.
 - **Project context:** attach files, folders, selections, rules, and configuration.
 - **Transparency:** inspect the exact Markdown before saving it.

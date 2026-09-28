@@ -2,6 +2,11 @@
 
 All notable changes to Agent Studio are documented here.
 
+## 0.1.12
+
+- Added Empty agent. It creates `.cursor/agents` in the open project and writes a blank subagent file with a comment on each field.
+- A project folder opened after Agent Studio starts is picked up, so new workspace agents are saved in that project's `.cursor/agents`.
+
 ## 0.1.11
 
 - Confirmed Delete inside the Agent Studio panel, because the sidebar cannot show a browser confirm dialog.

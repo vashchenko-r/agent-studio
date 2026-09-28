@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import type { AgentDraft, AgentRecord, AgentScope, Profile } from "../../domain/types";
 import { compileAgent } from "../../domain/agents/compileAgent";
+import { emptyAgentMarkdown } from "../../domain/agents/emptyAgent";
 import { draftFromMarkdown } from "../../domain/agents/parseAgent";
 import { assertSafeSlug, nowIso, slugify, uniqueSlug, withGlobalDisplayPrefix, withGlobalSlugPrefix } from "../../domain/ids";
 
@@ -171,6 +172,41 @@ export class CursorAgentStore {
       this.delete(draft.scope, raw);
     }
     return { ...record, nativePath };
+  }
+
+  /** Writes a commented blank subagent into `.cursor/agents` or `~/.cursor/agents`, creating the directory. */
+  createEmpty(scope: AgentScope): AgentRecord {
+    const dir = this.agentsDir(scope);
+    if (!dir) {
+      throw new Error("Open a workspace folder before saving a project agent.");
+    }
+    const catalog = this.list();
+    const requested = scope === "global" ? withGlobalSlugPrefix("empty-agent") : "empty-agent";
+    const taken = new Set(catalog.filter((agent) => agent.scope === scope).map((agent) => agent.slug));
+    const slug = uniqueSlug(requested, taken);
+    const otherScope = scope === "workspace" ? "global" : "workspace";
+    const other = catalog.find((agent) => agent.scope === otherScope && agent.slug === slug);
+    if (other) {
+      throw new Error(
+        `/${slug} already exists as a ${otherScope} agent. Cursor calls agents by slug, so a ${scope} copy would be ambiguous. Rename this agent or delete the ${otherScope} one.`,
+      );
+    }
+    const copyIndex = slug.startsWith(`${requested}-`) ? slug.slice(requested.length + 1) : "";
+    const baseName = copyIndex ? `Empty agent ${copyIndex}` : "Empty agent";
+    const displayName = scope === "global" ? withGlobalDisplayPrefix(baseName) : baseName;
+    ensureDir(dir);
+    const nativePath = safeRecordPath(dir, slug, ".md");
+    const markdown = emptyAgentMarkdown(slug, displayName);
+    writeAtomic(nativePath, markdown);
+    if (this.roots.pluginAgentsDir) {
+      ensureDir(this.roots.pluginAgentsDir);
+      writeAtomic(safeRecordPath(this.roots.pluginAgentsDir, `${scope}-${slug}`, ".md"), markdown);
+    }
+    const created = this.get(scope, slug);
+    if (!created) {
+      throw new Error("Empty agent was written but could not be read back.");
+    }
+    return created;
   }
 
   duplicate(scope: AgentScope, slug: string, profiles: Profile[]): AgentRecord {

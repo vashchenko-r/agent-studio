@@ -14,7 +14,12 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
   registerCommands(context, service);
-  context.subscriptions.push({ dispose: () => service.dispose() });
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      service.refresh();
+    }),
+    { dispose: () => service.dispose() },
+  );
 }
 
 export function deactivate(): void {
