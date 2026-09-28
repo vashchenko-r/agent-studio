@@ -2,6 +2,11 @@
 
 All notable changes to Agent Studio are documented here.
 
+## 0.1.14
+
+- Showed how to create an empty agent, start from a template, and delete an agent in the listing.
+- Added a Boosty sponsor link.
+
 ## 0.1.13
 
 - Saving an agent or an orchestra opens its Markdown file in the editor, including a global file under `~/.cursor/agents`.

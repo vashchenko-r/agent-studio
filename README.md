@@ -1,8 +1,35 @@
 # Agent Studio
 
+[![Open VSX](https://img.shields.io/open-vsx/v/vashchenko-r/agent-studio?style=for-the-badge&label=Open%20VSX&color=blueviolet)](https://open-vsx.org/extension/vashchenko-r/agent-studio)
+[![Downloads](https://img.shields.io/open-vsx/dt/vashchenko-r/agent-studio?style=for-the-badge&label=Downloads&color=blueviolet)](https://open-vsx.org/extension/vashchenko-r/agent-studio)
+[![GitHub](https://img.shields.io/badge/GitHub-vashchenko--r%2Fagent--studio-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/vashchenko-r/agent-studio)
+[![Support on Boosty](https://img.shields.io/badge/Support%20on%20Boosty-F15F2C?style=for-the-badge&logo=boosty&logoColor=white)](https://boosty.to/agentstudio)
+
 Create focused Cursor agents without writing Markdown frontmatter by hand.
 
 Choose a specialist, review its instructions, and save it as a normal Cursor subagent. Agent Studio keeps the result in your project, so it stays readable, portable, and ready to commit.
+
+## Create the first agent
+
+Click **Empty agent**. Agent Studio creates `.cursor/agents` in the project and writes a blank file. A comment on each field says what to type.
+
+![Empty agent button under the search field](images/create-empty-agent.png)
+
+## Start from a template
+
+Click **Use** on a template, review the filled form, then click **Save**.
+
+![Use on the React Expert template](images/template-use.png)
+
+![Save writes the agent file](images/template-save.png)
+
+## Delete an agent
+
+Open the agent from the list, then click **Delete**. Agent Studio asks you to confirm and removes the file.
+
+![Empty agent in the project list](images/delete-agent-list.png)
+
+![Delete at the bottom of the editor](images/delete-agent-button.png)
 
 ## Start in under a minute
 
@@ -58,6 +85,7 @@ Agent Studio creates a coordinator that asks Cursor to delegate each phase, wait
 
 ## Feedback and support
 
+- Support the project: [Boosty](https://boosty.to/agentstudio)
 - Browse the source: [vashchenko-r/agent-studio](https://github.com/vashchenko-r/agent-studio)
 - Report a bug or request a feature: [GitHub Issues](https://github.com/vashchenko-r/agent-studio/issues)
 - Ask a question: [GitHub Discussions](https://github.com/vashchenko-r/agent-studio/discussions)

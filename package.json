@@ -2,7 +2,7 @@
   "name": "agent-studio",
   "displayName": "Agent Studio",
   "description": "Create focused Cursor agents without writing Markdown frontmatter by hand.",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "publisher": "vashchenko-r",
   "license": "MIT",
   "repository": {
@@ -10,6 +10,9 @@
     "url": "https://github.com/vashchenko-r/agent-studio.git"
   },
   "homepage": "https://github.com/vashchenko-r/agent-studio#readme",
+  "sponsor": {
+    "url": "https://boosty.to/agentstudio"
+  },
   "bugs": {
     "url": "https://github.com/vashchenko-r/agent-studio/issues"
   },
